@@ -1,0 +1,381 @@
+# replace the first template variable
+- source:
+    kind: ConfigMap
+    name: some-cm
+    fieldPath: data.INTEGER
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.template
+    options:
+      create: false
+      index: 1
+      delimiter: '||'
+# replace the second template variable
+- source:
+    kind: ConfigMap
+    name: some-cm
+    fieldPath: data.HOST
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.template
+    options:
+      create: false
+      index: 3
+      delimiter: '||'
+# replace the third template variable
+- source:
+    kind: ConfigMap
+    name: some-cm
+    fieldPath: data.CODE
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.template
+    options:
+      create: false
+      index: 5
+      delimiter: '||'
+# 
+# After replacements, the template json looks like this:
+# ...
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+#
+# You most likely noticed that the delimiter is '||' and that the string values lack quotes at the begining 
+# ...you'll see why.
+#
+# Start adding strings to 'destination' "annotation" by reading chunks of the template...backwards.
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 6 # kustomize split will produce a list with 7 elements, so the last index is 6
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      create: true # the destination annotation does not exist, so we create it
+
+# 
+# Copied from the end of template, until first delimiter, now the destination looks like this:
+#
+# ...
+#     destination: |
+#       "
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+# 
+# Let's copy the next chunk which is in this case the last replaced template variable:
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 5
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: '"' # the destination string starts with a '"' so we're using it for spliting :)
+      index: 0 # ...and insert at index 0 (more details about this follow)
+
+# 
+# 'destination' looks like this now and it looks like we must use '"' as a delimiter to be able to continue.
+#  NOTE: trying to find delimiters in the variable value is not an option since we don't know the value in advance!
+# ...
+#     destination: |
+#       HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+# 
+# Let's continue and also find out why the json template is broken.
+# We omitted the beging '"' on purpose, kustomize will add it when we use '"' as a delimiter.
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 4
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: '"' # kustomize will add this at the begining of the string when it joins the list
+      index: -1000 # just to be sure it goes in the first position in the list :)
+# 
+# At this point, 'destination' looks like this:
+# 
+# ...
+#     destination: |
+#       ",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": "HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+# 
+# Let's continue...this one is interesting
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 3
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: '"'
+      index: 0 # why not -1000?
+# The string that will be split starts with a '"' and there is nothing before '"' so the resulting slice/list will be:
+# ["", ",rest of text" ... ] 
+# and if we add the next chunk ( local.domain" ) at first postion, the result after join will be
+# ['local.domain"", ...'] because the empty string is also part of the list, and join puts it between the delimiters ('"') :)
+
+# At this point, 'destination' looks like this:
+# ...
+#     destination: |
+#       domain.local",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": "HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+#
+# Let's continue
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 2
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: '"'
+      index: -1000 # we can use it, index 0 is not empty
+#
+# And the result is this:
+#
+# ...
+#     destination: |
+#       ,
+#           "Host": "domain.local",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": "HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+
+#
+# Bored? Hang on, we're getting there!
+#
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 1
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: ',' # encountered this pattern, but now with a ',' without anything in front -> replace the inconvenient empty string
+      index: 0
+#
+# And the result is:
+#
+# ...
+#   annotations:
+#     destination: |
+#       101,
+#           "Host": "domain.local",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": "HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+#
+# Yaay, we added our first templated json integer value!!!
+# 
+
+
+# 
+# Look at the result until now, it starts with '101,'...now what? we can't use ','  because we will end up
+# with 'Integer": ,101,' which is invalid json and we can't use 101 because we established that we can't possibly know
+# the value of the variable in advance!
+# 
+# well, an extra whitespace never hurt json so let's use it!
+- source:
+    kind: Whatever
+    name: whatever
+    fieldPath: metadata.annotations.template
+    options:
+      index: 0
+      delimiter: '||'
+  targets:
+  - select:
+      kind: Whatever
+    fieldPaths:
+    - metadata.annotations.destination
+    options:
+      delimiter: ' '
+      index: -1000 # just to be sure it goes into the first position
+
+#
+# Now it looks like this ('destination' contains valid json text, with all template variables replaced)
+#
+# ...
+#     destination: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer":  101,
+#           "Host": "domain.local",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": "HTTP_302"
+#         }
+#       }
+#     template: |
+#       {
+#         "Type": "redirect",
+#         "RedirectConfig": {
+#           "Protocol": "#{protocol}",
+#           "Port": "#{port}",
+#           "Integer": ||101||,
+#           "Host": ||domain.local||",
+#           "Path": "/#{path}",
+#           "Query": "#{query}",
+#           "StatusCode": ||HTTP_302||"
+#         }
+#       }
+
+#
+# Now, check 'kustomization.yaml' in the root of the repo, for one last step.
+#

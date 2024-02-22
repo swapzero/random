@@ -1,0 +1,17 @@
+kind: Whatever
+metadata:
+  name: whatever
+  annotations:
+    template: |
+      {
+        "Type": "redirect",
+        "RedirectConfig": {
+          "Protocol": "#{protocol}",
+          "Port": "#{port}",
+          "Integer": ||BLA||,
+          "Host": ||DOMAIN||",
+          "Path": "/#{path}",
+          "Query": "#{query}",
+          "StatusCode": ||STATUS_CODE||"
+        }
+      }
