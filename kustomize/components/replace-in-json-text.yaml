@@ -117,7 +117,7 @@
     - metadata.annotations.destination
     options:
       delimiter: '"' # the destination string starts with a '"' so we're using it for spliting :)
-      index: 0 # ...and insert at index 0 (more details about this follow)
+      index: 0 # ...and insert at index 0 (more details about this below)
 
 # 
 # 'destination' looks like this now and it looks like we must use '"' as a delimiter to be able to continue.
