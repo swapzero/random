@@ -158,7 +158,7 @@
     fieldPaths:
     - metadata.annotations.destination
     options:
-      delimiter: '"' # kustomize will add this at the begining of the string when it joins the list
+      delimiter: '"' # when the list is joined, '"' will be placed between the new chunk and the existing string, 'fixing' our missing double quote
       index: -1000 # just to be sure it goes in the first position in the list :)
 # 
 # At this point, 'destination' looks like this:
