@@ -204,9 +204,9 @@
       delimiter: '"'
       index: 0 # why not -1000?
 # The string that will be split starts with a '"' and there is nothing before '"' so the resulting slice/list will be:
-# ["", ",rest of text" ... ] 
+# ['', '",rest of text' ... ]
 # and if we add the next chunk ( local.domain" ) at first postion, the result after join will be
-# ['local.domain"", ...'] because the empty string is also part of the list, and join puts it between the delimiters ('"') :)
+# ['local.domain""', ...'] because the empty string is also part of the list, and join puts it between the delimiters ('"') :)
 
 # At this point, 'destination' looks like this:
 # ...
