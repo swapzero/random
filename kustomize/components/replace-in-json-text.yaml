@@ -143,7 +143,7 @@
 
 # 
 # Let's continue and also find out why the json template is broken.
-# We omitted the beging '"' on purpose, kustomize will add it when we use '"' as a delimiter.
+# We omitted the starting '"' for templated string values on purpose, kustomize will add it when we use '"' as a delimiter.
 #
 - source:
     kind: Whatever
