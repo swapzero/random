@@ -325,7 +325,7 @@
 
 
 # 
-# Look at the result until now, it starts with '101,'...now what? we can't use ','  because we will end up
+# Look at the result, it starts with '101,'...now what? we can't use ','  because we will end up
 # with 'Integer": ,101,' which is invalid json and we can't use 101 because we established that we can't possibly know
 # the value of the variable in advance!
 # 
