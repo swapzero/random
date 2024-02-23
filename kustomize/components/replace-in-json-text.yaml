@@ -210,7 +210,7 @@
 #
 # and if we force the next chunk ( domain.local" ) at first position, then the resulting list  will be:
 #
-# ['domain.local"', '', ',_rest_of_chunk', ...]
+# ['domain.local"', '', '",_rest_of_chunk', ...]
 #                   ^___ empty string
 #
 # joined list produces 'local.domain"",_rest_of_string' which is invalid json => which is why we should replace element 0 instead
