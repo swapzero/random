@@ -325,11 +325,11 @@
 
 
 # 
-# Look at the result, it starts with '101,'...now what? we can't use ','  because we will end up
-# with 'Integer": ,101,' which is invalid json and we can't use 101 because we established that we can't possibly know
+# Look at the result, it starts with '101,'...now what? we can't use ',' as a delimiter  because we will end up
+# with '"Integer": ,101,' which is invalid json and we can't use 101 either because we established that we can't possibly know
 # the value of the variable in advance!
 # 
-# well, an extra whitespace never hurt json so let's use it!
+# well, an extra whitespace never hurt json so let's use it as a delimiter!
 - source:
     kind: Whatever
     name: whatever
