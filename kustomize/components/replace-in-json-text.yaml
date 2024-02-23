@@ -378,5 +378,5 @@
 #       }
 
 #
-# Now, check 'kustomization.yaml' in the root of the repo, for one last step.
+# Now, check 'kustomization.yaml' in this directory for one last step.
 #
