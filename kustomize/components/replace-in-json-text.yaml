@@ -206,6 +206,7 @@
 # The string that will be split starts with a '"' and there is nothing before '"' so the resulting slice/list will be:
 #
 # ['', '",_rest_of_chunk' ... ]
+#  ^___ empty string
 #
 # and if we force the next chunk ( domain.local" ) at first position, then the resulting list  will be:
 #
