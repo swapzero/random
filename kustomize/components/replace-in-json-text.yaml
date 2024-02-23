@@ -376,7 +376,3 @@
 #           "StatusCode": ||HTTP_302||"
 #         }
 #       }
-
-#
-# Now, check 'kustomization.yaml' in this directory for one last step.
-#
