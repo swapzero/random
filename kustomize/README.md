@@ -14,11 +14,11 @@ kustomize build .
         "RedirectConfig": {
           "Protocol": "#{protocol}",
           "Port": "#{port}",
-          "Integer": ||BLA||,
+          "Integer": ||INTEGER||,
           "Host": ||DOMAIN||",
           "Path": "/#{path}",
           "Query": "#{query}",
-          "StatusCode": ||STATUS_CODE||"
+          "StatusCode": ||CODE||"
         }
       }
   ```
